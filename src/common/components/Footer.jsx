@@ -34,7 +34,7 @@ function Footer() {
                 </div>
             </div>
             <div className='bg-black p-3 text-center text-white'>
-                <p>Copyright @ 2025 All rights reserved  |  This webiste is made with &#10084; by Emil Joseph  |  LUMINAR TECHNOLAB KOCHI</p>
+                <p>Copyright @ 2025 All rights reserved    |  LUMINAR TECHNOLAB KOCHI</p>
             </div>
 
         </>
