@@ -24,6 +24,7 @@ function Auth({ register }) {
       const result = await registerAPI(userDetails);
       console.log(result);
       if (result.status == 200) {
+    
         toast.success("Registered Successfully");
         setuserDetails({
           username: "",
@@ -52,6 +53,8 @@ function Auth({ register }) {
       const result = await LoginAPI(userDetails);
       console.log(result);
       if (result.status == 200) {
+            sessionStorage.setItem("existingUser",JSON.stringify(result.data.existingUser))
+        sessionStorage.setItem("token",result.data.token)
         toast.success(`Login Sucessfull`);
         setuserDetails({
           username: "",

@@ -1,12 +1,24 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { HiMiniMagnifyingGlass } from "react-icons/hi2";
 import { Link } from 'react-router-dom';
 import { FaStar } from "react-icons/fa";
+import { getHomeBookAPI } from '../../Service/allAPI';
 
 
 function LandingPage() {
+
+  const[homeBook,setHomeBook]=useState([])
+
+  const getHomeBooks=async()=>{
+    const result =await getHomeBookAPI()
+    console.log(result);
+    setHomeBook(result.data)
+    
+  }
+
+
   const testimonials = [
   {
     name: "Stefan J",
@@ -27,6 +39,10 @@ function LandingPage() {
     text: "Company Name delivered such strong professionalism and responsive communications that they earned a second project as well as recommendations for additional partnerships.",
   },
 ];
+
+useEffect(()=>{
+  getHomeBooks()
+},[])
 
   return (
     <>
@@ -50,18 +66,22 @@ function LandingPage() {
     <section className='md:px-40 p-5 flex flex-col justify-center items-center'>
       <h1>NEW ARRIVALS</h1>
       <h1>Explore our latest colletion</h1>
-      <div className='md:grid grid-cols-4 w-full mt-5'>
+    {homeBook.length>0 ?  <div className='md:grid grid-cols-4 w-full mt-5'>
+      {homeBook.map((item)=>(
         <div className='p-3'>
           <div className='shadow p-3 rounded'>
-            <img height={"300px"} width={"100%"} src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTb1BqA5OjYp-kgva4qy8OqgF6IHwGy_C7pRw&s'/>
+            <img height={"300px"} width={"100%"} src={item.imageURL}/>
             <div className='text-center mt-3'>
-              <p className='font-bold text-2xl'>Book Name</p>
-              <p className='font-bold text-xl'>Author</p>
-              <p className='font-bold'>₹499</p>
+              <p className='font-bold text-2xl'>{item.title}</p>
+              <p className='font-bold text-xl'>{item.author}</p>
+              <p className='font-bold'>{item.price}</p>
             </div>
           </div>
         </div>
-      </div>
+
+      ))}
+        
+      </div>:<p>Loading ....</p>}
       <div className='text-center my-5'>
         <Link to={"/all-books"}><button className='px-3 py-2 bg-blue-900 text-white hover:border hover:border-blue-900 hover:text-blue-900 hover:bg-white'>Explore More</button></Link>
       </div>
