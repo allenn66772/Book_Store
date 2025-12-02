@@ -5,16 +5,19 @@ import { MdVerified } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
 import { TiLeaf } from "react-icons/ti";
 import { toast } from "react-toastify";
-import { addBookAPI } from "../../Service/allAPI";
+import { addBookAPI, deleteUserAddedBookAPI, GetPurchaseHistoryAPI, getUserBookAPI } from "../../Service/allAPI";
 
 function Profile() {
   const [sellBookstatus, setsellBookstatus] = useState(true);
   const [Bookstatus, setBookstaus] = useState(false);
   const [preview, setpreview] = useState("");
   const [purchaseStatus, setpurchaseStatus] = useState(false);
+  const [purchaseHistory,setpurchaseHistory]=useState([])
   const [allUploadImages, setallUploadImages] = useState([]);
   const [token, setToken]=useState("")
   const [username,setUsername]=useState("")
+  const [userBooks,setuserBooks]=useState([])
+  const [deleteBookStatus,setdeleteBookStatus]=useState([])
   const [bookDetails, setbookDetails] = useState({
     title: "",
     author: "",
@@ -58,7 +61,7 @@ function Profile() {
       language,
       isbn,
       category,
-    } = bookDetails;
+    } = bookDetails;  
     if (
       !title ||
       !author ||
@@ -94,6 +97,7 @@ function Profile() {
       console.log(result);
       if(result.status ==200){
         toast.success("Book Added Successfully")
+        Handlereset()
        
       }else if(result.status==401){
         toast.warning(result.response.data)
@@ -113,22 +117,86 @@ function Profile() {
   };
 
 
-  //  const Handlereset=async()=>{
-  //    const {
-  //     title="",
-  //     author="",
-  //     nopages="",
-  //     imageURL="",
-  //     price="",
-  //     discountPrice,
-  //     uploadImages,
-  //     abstract,
-  //     publisher,
-  //     language,
-  //     isbn,
-  //     category,
-  //   } = bookDetails;
-  //  }
+const Handlereset = () => {
+  setbookDetails({
+    title: "",
+    author: "",
+    nopages: "",
+    imageURL: "",
+    price: "",
+    discountPrice: "",
+    uploadImages: [],
+    abstract: "",
+    publisher: "",
+    language: "",
+    isbn: "",
+    category: "",
+  });
+
+  setpreview("");
+  setallUploadImages([]);
+};
+
+//user addedd books
+const userAddedBooks=async()=>{
+  const reqHeader ={
+     "Authorization": `Bearer ${token}`,
+  }
+  try{
+    const result=await getUserBookAPI(reqHeader)
+    setuserBooks(result.data)
+    // console.log(result);
+    
+
+  }catch (error){
+    console.log(error);
+    
+
+  }
+}
+
+//delete user added book
+  const handleDeleteBook =async(id)=>{
+    try {
+      const result =await deleteUserAddedBookAPI(id)
+     
+      console.log(result);
+
+      if(result.status ==200){
+         setdeleteBookStatus(true)
+        toast.success(`Book Deleted Successfully`)
+      }else{
+        toast.error("Something went wrong")
+      }
+      
+      
+    } catch (error) {
+      console.log(error);
+      
+      
+    }
+  }
+
+  //get Purchase History
+   const getPurchaseHistory =async()=>{
+
+    const reqHeader={
+       "Authorization": `Bearer ${token}`,
+
+    }
+    try{
+      const result=await GetPurchaseHistoryAPI(reqHeader)
+      console.log(result);
+      setpurchaseHistory(result.data)
+      
+
+    }catch(error){
+      console.log(error);
+      
+    }
+   }
+
+
 useEffect(()=>{
   if(sessionStorage.getItem("token")){
     setToken(sessionStorage.getItem("token"))
@@ -137,7 +205,15 @@ useEffect(()=>{
     const name =JSON.parse(sessionStorage.getItem("existingUser"))
     setUsername(name.username)
   }
-},[])
+  if (Bookstatus==true){
+    userAddedBooks()
+  }
+  if(purchaseHistory==true){}
+    getPurchaseHistory()
+  
+    
+ 
+},[Bookstatus,deleteBookStatus,purchaseStatus])
 
 
 
@@ -207,7 +283,9 @@ useEffect(()=>{
           onClick={() => {
             setsellBookstatus(false),
               setBookstaus(false),
-              setpurchaseStatus(true);
+              setpurchaseStatus(true),
+              userAddedBooks();
+
           }}
           className={
             purchaseStatus
@@ -436,7 +514,7 @@ useEffect(()=>{
                 </div>
 
                 <div className="flex md:justify-end justify-center mt-5  gap-2">
-                  <button className="bg-red-500 border text-white px-5 py-3 rounded  hover:border-red-500 hover:text-red-600 hover:bg-white">
+                  <button onClick={Handlereset} className="bg-red-500 border text-white px-5 py-3 rounded  hover:border-red-500 hover:text-red-600 hover:bg-white">
                     Reset
                   </button>
                   <button type="button" onClick={HandleaddBook} className="bg-green-500 border text-white px-5 py-3 rounded  hover:border-green-500 hover:text-green-600 hover:bg-white">
@@ -450,95 +528,115 @@ useEffect(()=>{
       )}
 
       {/* All Books */}
-      {Bookstatus && (
-        <div className="p-10 my-20 shadow rounded">
-          <div className="bg-gray-200">
-            <div className="md:grid grid-cols-[3fr_1fr]">
-              <div className="px-4">
-                <h1 className="text-2xl">Book Title</h1>
-                <h2 className="">Author Name</h2>
-                <h3 className="text-blue-600">$699</h3>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab
-                  qui fugiat aut, deleniti omnis distinctio hic vitae magni
-                  aspernatur. Dignissimos repellendus debitis sint distinctio
-                  magni atque perferendis odit ratione consectetur.
-                </p>
-                <div className="flex mt-5">
-                  <img
-                    src="https://www.psdstamps.com/wp-content/uploads/2022/04/round-pending-stamp-png.png "
-                    style={{ width: "70px", height: "70px" }}
-                    alt=""
-                  />
-                  <img
-                    src="https://juststickers.in/wp-content/uploads/2017/08/seal-of-approval.png "
-                    style={{ width: "70px", height: "70px" }}
-                    alt=""
-                  />
-                  <img
-                    src="https://cdn-icons-png.flaticon.com/512/6188/6188726.png"
-                    style={{ width: "70px", height: "70px" }}
-                    alt=""
-                  />
-                </div>
-              </div>
-              <div className="px-4 mt-4 md:mt-4">
-                <img
-                  src="https://d1csarkz8obe9u.cloudfront.net/posterpreviews/contemporary-fiction-night-time-book-cover-design-template-1be47835c3058eb42211574e0c4ed8bf.jpg?ts=1734004864"
-                  className=""
-                  style={{ height: "250px" }}
-                  alt=""
-                />
-                <div className="flex justify-end mt-4">
-                  <button className="p-2 rounded bg-red-500 text-white hover:bg-gray-200 hover:text-red-600 hover:border hover:border-red-600">
-                    Delete
-                  </button>
-                </div>
-              </div>
+   {Bookstatus && (
+  <div className="p-10 my-20 shadow rounded">
+    {userBooks?.length > 0 ? (
+      userBooks.map((book) => (
+        <div className="md:grid grid-cols-[3fr_1fr]" key={book._id}>
+          <div className="px-4">
+            <h1 className="text-2xl">{book.title}</h1>
+            <h2>{book.author}</h2>
+            <h3 className="text-blue-600">${book.price}</h3>
+            <p>{book.abstract}</p>
+
+            <div className="flex mt-5">
+          { book.status=='pending'  ? <img
+                src="https://www.psdstamps.com/wp-content/uploads/2022/04/round-pending-stamp-png.png"
+                style={{ width: "70px", height: "70px" }}
+                alt=""
+              />:book.status=="approved"?
+              <img
+                src="https://juststickers.in/wp-content/uploads/2017/08/seal-of-approval.png"
+                style={{ width: "70px", height: "70px" }}
+                alt=""
+              />:
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/6188/6188726.png"
+                style={{ width: "70px", height: "70px" }}
+                alt=""
+              />}
             </div>
           </div>
 
-          <div className="flex justify-center items-center flex-col">
-            <img src="" style={{ width: "200px", height: "200px" }} alt="" />
-            <p className="text-red-600 text-2xl">No Book Added</p>
+          <div className="px-4 mt-4 md:mt-4">
+            <img
+              src={book.uploadImages?.[0]}
+              style={{ height: "250px" }}
+              alt=""
+            />
+
+            <div className="flex justify-end mt-4">
+              <button type="button" onClick={()=>handleDeleteBook(book?._id)} className="p-2 rounded bg-red-500 text-white hover:bg-gray-200 hover:text-red-600 hover:border hover:border-red-600">
+                Delete
+              </button>
+            </div>
           </div>
         </div>
-      )}
+      ))
+    ) : (
+      <div className="flex justify-center items-center flex-col">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/7486/7486754.png"
+          style={{ width: "150px", height: "150px" }}
+          alt="No books"
+        />
+        <p className="text-red-600 text-2xl mt-3">No Book Added</p>
+      </div>
+    )}
+  </div>
+)}
 
       {/* Purchase History */}
       {purchaseStatus && (
-        <div className="p-10 my-20 shadow rounded">
-          <div className="bg-gray-200">
-            <div className="md:grid grid-cols-[3fr_1fr]">
-              <div className="px-4">
-                <h1 className="text-2xl">Book Title</h1>
-                <h2 className="">Author Name</h2>
-                <h3 className="text-blue-600">$699</h3>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab
-                  qui fugiat aut, deleniti omnis distinctio hic vitae magni
-                  aspernatur. Dignissimos repellendus debitis sint distinctio
-                  magni atque perferendis odit ratione consectetur.
-                </p>
-              </div>
+  <div className="p-10 my-20 shadow rounded">
+    {purchaseHistory.length > 0 ? (
+      purchaseHistory.map((ownbook, index) => (
+        <div key={index} className="bg-gray-200 mb-6 rounded p-4">
+          <div className="md:grid grid-cols-[3fr_1fr] gap-4">
+            
+            <div className="px-4">
+              <h1 className="text-2xl font-semibold">
+                {ownbook?.title }
+              </h1>
 
-              <div className="px-4 mt-4 md:mt-4">
-                <img
-                  src="https://d1csarkz8obe9u.cloudfront.net/posterpreviews/contemporary-fiction-night-time-book-cover-design-template-1be47835c3058eb42211574e0c4ed8bf.jpg?ts=1734004864"
-                  className=""
-                  style={{ height: "250px" }}
-                  alt=""
-                />
-              </div>
+              <h2 className="text-gray-700">
+                {ownbook?.author }
+              </h2>
+
+              <h3 className="text-blue-600 font-bold">
+                ₹{ownbook?.price }
+              </h3>
+
+              <p className="text-gray-600 mt-2">
+                {ownbook?.abstract }
+              </p>
+            </div>
+
+            
+            <div className="px-4 mt-4 md:mt-0 flex justify-center">
+              <img
+                src={ownbook?.imageURL || "/no-image.png"}
+                className="rounded shadow"
+                style={{ height: "250px" }}
+                alt={ownbook?.title }
+              />
             </div>
           </div>
-
-          <div className="flex justify-center items-center flex-col">
-            <img src="" style={{ width: "200px", height: "200px" }} alt="" />
-            <p className="text-red-600 text-2xl">No Book Added</p>
-          </div>
         </div>
-      )}
+      ))
+    ) : (
+      <div className="flex justify-center items-center flex-col">
+        <img
+          src="/empty.png"
+          style={{ width: "200px", height: "200px" }}
+          alt="No Books"
+        />
+        <p className="text-red-600 text-2xl mt-4">No Book Added</p>
+      </div>
+    )}
+  </div>
+)}
+
 
       <Footer />
     </>

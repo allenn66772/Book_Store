@@ -9,6 +9,9 @@ function AllBooks() {
   const [allBooks, setAllBooks] = useState([]);
   const [allCategory, setallCategory] = useState([]);
   const [tempBooks,settempBooks]=useState([])
+  const [searchKey,setsearchKey]=useState("")
+  console.log(searchKey);
+  
 
   const getAllBooks = async (usertoken) => {
     const reqHeader = {
@@ -16,7 +19,7 @@ function AllBooks() {
     };
 
     try {
-      const result = await getAllBooksAPI(reqHeader);
+      const result = await getAllBooksAPI(searchKey,reqHeader);
       console.log(result);
 
       if (result.status === 200) {
@@ -39,13 +42,15 @@ function AllBooks() {
     }
   }
 
+  
+
   useEffect(() => {
     if (sessionStorage.getItem("token")) {
       const usertoken = sessionStorage.getItem("token");
       setToken(usertoken);
       getAllBooks(usertoken);
     }
-  }, []);
+  }, [searchKey]);
 
   return (
     <>
@@ -55,7 +60,7 @@ function AllBooks() {
 
         {/* Search */}
         <div className="flex my-5">
-          <input
+          <input value={searchKey} onChange={(e)=>setsearchKey(e.target.value)}
             type="text"
             className="p-2 border border-gray-200 text-black w-100 placeholder-gray-500"
             placeholder="Search by title"
