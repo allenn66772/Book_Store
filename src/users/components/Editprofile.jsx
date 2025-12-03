@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useState } from "react";
 import { FaRegEdit } from "react-icons/fa";
 import SERVERURL from "../../Service/ServerURL";
+import { updateUserProfileAPI } from "../../Service/allAPI";
 
 function Editprofile() {
   const [offCanvas, setoffCanvas] = useState(false);
@@ -23,7 +24,51 @@ function Editprofile() {
     const url=URL.createObjectURL(e.target.files[0])
     setpreview(url)
   }
-  
+
+     //update user details
+ // Update user
+const updateUserData = async () => {
+  try {
+    // validate password
+    if (userDetails.password !== userDetails.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("username", userDetails.username);
+    formData.append("password", userDetails.password);
+    formData.append("bio", userDetails.bio);
+    formData.append("role", userDetails.role);
+
+    // if user uploaded a new image → send new file
+    if (userDetails.profile instanceof File) {
+      formData.append("profile", userDetails.profile);
+    } else {
+      // else send old filename (already in DB)
+      formData.append("profile", existingProfile);
+    }
+
+    const reqHeader = {
+      "Authorization": `Bearer ${token}`, // do NOT manually set content-type
+    };
+
+    const result = await updateUserProfileAPI(formData, reqHeader);
+
+    console.log(result);
+
+    if (result.status === 200 || result?.username) {
+      alert("Profile Updated Successfully!");
+      setoffCanvas(false);
+
+      // update session storage
+      sessionStorage.setItem("existingUser", JSON.stringify(result));
+    }
+
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   useEffect(()=>{
     if(sessionStorage.getItem("token")){
@@ -90,7 +135,7 @@ function Editprofile() {
               />
             </div>
             <div className="mt-10 mb-3 w-full px-5">
-              <input value={userDetails.password}
+              <input value={userDetails.confirmPassword}
                 type=" text" onChange={(e)=>setuserDetails({...userDetails,confirmPassword:e.target.value})}
                 placeholder="Confirm Password"
                 className="w-full border border-gray-300 placeholder-gray-300 p-2 rounded"
@@ -104,10 +149,10 @@ function Editprofile() {
               />
             </div>
             <div className="flex justify-end w-full px-5 gap-2">
-              <button className="text-white border py-3 px-4 rounded bg-red-600 hover:bg-white hover:text-red-600">
+              <button  className="text-white border py-3 px-4 rounded bg-red-600 hover:bg-white hover:text-red-600">
                 Reset
               </button>
-              <button className="bg-green-500 text-white border py-3 px-4 rounded hover:bg-white hover:text-green-500">
+              <button onClick={updateUserData} className="bg-green-500 text-white border py-3 px-4 rounded hover:bg-white hover:text-green-500">
                 Update
               </button>
             </div>

@@ -41,3 +41,7 @@ export const addBookAPI =async(reqBody,reqHeader)=>{
  export const GetPurchaseHistoryAPI=async(reqHeader)=>{
     return await CommonAPI("GET",`${SERVERURL}/own-books`,{},reqHeader)
  }
+ //update user profile
+ export const updateUserProfileAPI = async (formData, reqHeader) => {
+  return await CommonAPI("PUT",`${SERVERURL}/update-user-profile`,formData,reqHeader);
+};
