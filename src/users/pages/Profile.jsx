@@ -6,6 +6,7 @@ import { FaRegEdit } from "react-icons/fa";
 import { TiLeaf } from "react-icons/ti";
 import { toast } from "react-toastify";
 import { addBookAPI, deleteUserAddedBookAPI, GetPurchaseHistoryAPI, getUserBookAPI } from "../../Service/allAPI";
+import Editprofile from "../components/Editprofile";
 
 function Profile() {
   const [sellBookstatus, setsellBookstatus] = useState(true);
@@ -242,9 +243,7 @@ useEffect(()=>{
             </p>
           </div>
           <div>
-            <button className="flex px-4 py-3 font-bold border border-blue-600 text-blue-800">
-              <FaRegEdit className="mt-1 me-2" /> Edit
-            </button>
+            <Editprofile/>
           </div>
         </div>
       </div>
