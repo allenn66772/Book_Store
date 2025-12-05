@@ -1,24 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Header from "../../common/components/Header";
 import Footer from "../../common/components/Footer";
 import { MdVerified } from "react-icons/md";
-import { FaRegEdit } from "react-icons/fa";
-import { TiLeaf } from "react-icons/ti";
 import { toast } from "react-toastify";
-import { addBookAPI, deleteUserAddedBookAPI, GetPurchaseHistoryAPI, getUserBookAPI } from "../../Service/allAPI";
+import {
+  addBookAPI,
+  deleteUserAddedBookAPI,
+  GetPurchaseHistoryAPI,
+  getUserBookAPI,
+} from "../../Service/allAPI";
 import Editprofile from "../components/Editprofile";
+import SERVERURL from "../../Service/ServerURL";
+import { userprofileUpdateContext } from "../../Context/ContextShare";
 
 function Profile() {
   const [sellBookstatus, setsellBookstatus] = useState(true);
   const [Bookstatus, setBookstaus] = useState(false);
-  const [preview, setpreview] = useState("");
   const [purchaseStatus, setpurchaseStatus] = useState(false);
-  const [purchaseHistory,setpurchaseHistory]=useState([])
+
+  const [preview, setpreview] = useState("");
+  const [purchaseHistory, setpurchaseHistory] = useState([]);
   const [allUploadImages, setallUploadImages] = useState([]);
-  const [token, setToken]=useState("")
-  const [username,setUsername]=useState("")
-  const [userBooks,setuserBooks]=useState([])
-  const [deleteBookStatus,setdeleteBookStatus]=useState([])
+  const [token, setToken] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setbio] = useState("");
+  const [profile, setprofile] = useState("");
+  const [userBooks, setuserBooks] = useState([]);
+
+  const { userProfileUpdatestatus } = useContext(userprofileUpdateContext);
+
+  const [deleteBookStatus, setdeleteBookStatus] = useState(false);
+
   const [bookDetails, setbookDetails] = useState({
     title: "",
     author: "",
@@ -34,22 +46,39 @@ function Profile() {
     category: "",
   });
 
-  
   const Handlefile = (e) => {
-    console.log(e.target.files[0]);
-    const fileArray = [...bookDetails.uploadImages];
-    fileArray.push(e.target.files[0]);
-    setbookDetails({ ...bookDetails, uploadImages: fileArray });
-
     const url = URL.createObjectURL(e.target.files[0]);
-    setpreview(url);
 
-    let images = [...allUploadImages];
-    images.push(url);
-    setallUploadImages(images);
+    setbookDetails({
+      ...bookDetails,
+      uploadImages: [...bookDetails.uploadImages, e.target.files[0]],
+    });
+
+    setallUploadImages([...allUploadImages, url]);
+    setpreview(url);
   };
 
-  const HandleaddBook = async() => {
+  const Handlereset = () => {
+    setbookDetails({
+      title: "",
+      author: "",
+      nopages: "",
+      imageURL: "",
+      price: "",
+      discountPrice: "",
+      uploadImages: [],
+      abstract: "",
+      publisher: "",
+      language: "",
+      isbn: "",
+      category: "",
+    });
+
+    setpreview("");
+    setallUploadImages([]);
+  };
+
+  const HandleaddBook = async () => {
     const {
       title,
       author,
@@ -63,7 +92,8 @@ function Profile() {
       language,
       isbn,
       category,
-    } = bookDetails;  
+    } = bookDetails;
+
     if (
       !title ||
       !author ||
@@ -75,454 +105,331 @@ function Profile() {
       !publisher ||
       !language ||
       !isbn ||
-      !category || uploadImages.length==0
+      !category ||
+      uploadImages.length === 0
     ) {
-      toast.info("Fill all Fields compltely")
-    }else{
-      //reqHeader
-      const reqHeader ={
-        "Authorization":`Bearer ${token}`
-      }
-      //reqbody
-      const reqBody =new FormData()
-      for(let key in bookDetails){
-        if(key !="uploadImages"){
-          reqBody.append(key,bookDetails[key])
-        }else{
-          bookDetails.uploadImages.forEach(img=>{
-            reqBody.append("uploadImages",img)
-          })
-        }
-      }
-    try{
-      const result=await addBookAPI(reqBody,reqHeader)
-      console.log(result);
-      if(result.status ==200){
-        toast.success("Book Added Successfully")
-        Handlereset()
-       
-      }else if(result.status==401){
-        toast.warning(result.response.data)
-      }else{
-        toast.error("Something went  wrong oon adding book")
-       
-      }
-      
-    }catch(error){
-      toast.error("something went wrong!!!")
-      console.log(error);
-      
+      return toast.info("Fill all fields completely");
     }
 
+    const reqHeader = { Authorization: `Bearer ${token}` };
+    const reqBody = new FormData();
+
+    for (let key in bookDetails) {
+      if (key !== "uploadImages") reqBody.append(key, bookDetails[key]);
+      else uploadImages.forEach((img) => reqBody.append("uploadImages", img));
     }
-    
+
+    try {
+      const result = await addBookAPI(reqBody, reqHeader);
+
+      if (result.status === 200) {
+        toast.success("Book Added Successfully");
+        Handlereset();
+      } else {
+        toast.error("Something went wrong");
+      }
+    } catch (err) {
+      console.log(err);
+      toast.error("Something went wrong");
+    }
   };
 
+  const userAddedBooks = async () => {
+    const reqHeader = { Authorization: `Bearer ${token}` };
+    const result = await getUserBookAPI(reqHeader);
+    setuserBooks(result.data);
+  };
 
-const Handlereset = () => {
-  setbookDetails({
-    title: "",
-    author: "",
-    nopages: "",
-    imageURL: "",
-    price: "",
-    discountPrice: "",
-    uploadImages: [],
-    abstract: "",
-    publisher: "",
-    language: "",
-    isbn: "",
-    category: "",
-  });
+  const handleDeleteBook = async (id) => {
+    const result = await deleteUserAddedBookAPI(id);
 
-  setpreview("");
-  setallUploadImages([]);
-};
-
-//user addedd books
-const userAddedBooks=async()=>{
-  const reqHeader ={
-     "Authorization": `Bearer ${token}`,
-  }
-  try{
-    const result=await getUserBookAPI(reqHeader)
-    setuserBooks(result.data)
-    // console.log(result);
-    
-
-  }catch (error){
-    console.log(error);
-    
-
-  }
-}
-
-//delete user added book
-  const handleDeleteBook =async(id)=>{
-    try {
-      const result =await deleteUserAddedBookAPI(id)
-     
-      console.log(result);
-
-      if(result.status ==200){
-         setdeleteBookStatus(true)
-        toast.success(`Book Deleted Successfully`)
-      }else{
-        toast.error("Something went wrong")
-      }
-      
-      
-    } catch (error) {
-      console.log(error);
-      
-      
+    if (result.status === 200) {
+      toast.success("Book Deleted Successfully");
+      setdeleteBookStatus((prev) => !prev);
+    } else {
+      toast.error("Something went wrong");
     }
-  }
+  };
 
-  //get Purchase History
-   const getPurchaseHistory =async()=>{
+  const getPurchaseHistory = async () => {
+    const reqHeader = { Authorization: `Bearer ${token}` };
+    const result = await GetPurchaseHistoryAPI(reqHeader);
+    setpurchaseHistory(result.data);
+  };
 
-    const reqHeader={
-       "Authorization": `Bearer ${token}`,
-
+  useEffect(() => {
+    if (sessionStorage.getItem("token")) {
+      setToken(sessionStorage.getItem("token"));
     }
-    try{
-      const result=await GetPurchaseHistoryAPI(reqHeader)
-      console.log(result);
-      setpurchaseHistory(result.data)
-      
 
-    }catch(error){
-      console.log(error);
-      
+    if (sessionStorage.getItem("existingUser")) {
+      const user = JSON.parse(sessionStorage.getItem("existingUser"));
+      setUsername(user.username);
+      setbio(user.bio);
+      setprofile(user.profile);
     }
-   }
 
-
-
-
-
-
-useEffect(()=>{
-  if(sessionStorage.getItem("token")){
-    setToken(sessionStorage.getItem("token"))
-  }
-  if(sessionStorage.getItem("existingUser")){
-    const name =JSON.parse(sessionStorage.getItem("existingUser"))
-    setUsername(name.username)
-  }
-  if (Bookstatus==true){
-    userAddedBooks()
-  }
-  if(purchaseHistory==true){}
-    getPurchaseHistory()
-  
-    
- 
-},[Bookstatus,deleteBookStatus,purchaseStatus])
-
-
+    if (Bookstatus) userAddedBooks();
+    if (purchaseStatus) getPurchaseHistory();
+  }, [Bookstatus, purchaseStatus, deleteBookStatus, userProfileUpdatestatus]);
 
   return (
     <>
       <Header />
-      <div style={{ height: "200px" }} className="bg-gray-900">
+
+      <div className="bg-gray-900 h-[200px]">
         <div className="bg-white p-3 w-[230px] h-[230px] rounded-full ml-[75px]">
           <img
-            className="w-[200px] h-[200px] rounded-full "
-            src="https://imgs.search.brave.com/lJh6f-9znwC-LurhlEyw92uWE0w76EsDS4CskX6sQEA/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pMi53/cC5jb20vd3d3LnNo/dXR0ZXJzdG9jay5j/b20vYmxvZy93cC1j/b250ZW50L3VwbG9h/ZHMvc2l0ZXMvNS8y/MDI0LzA2L3Byb2Zp/bGVfcGhvdG9fc2Ft/cGxlXzMuanBnP3Nz/bD0x"
+            className="w-[200px] h-[200px] rounded-full"
+            src={`${SERVERURL}/imgUploads/${profile}`}
             alt=""
           />
         </div>
+
         <div className="md:flex justify-between px-20 mt-5">
-          <div className="m-3">
-            <div className="flex items-center">
-              <h1 className="font-bold md:text-3xl text-2xl">{username}</h1>
-              <MdVerified className="text-blue-600 ms-3 text-xl" />
-            </div>
-            <p>
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Fugiat
-              laborum veritatis sapiente illum perspiciatis magni magnam numquam
-              id voluptatum tempora doloremque necessitatibus saepe, asperiores,
-              omnis earum? Delectus porro tenetur eligendi.
-            </p>
-          </div>
           <div>
-            <Editprofile/>
+            <h1 className="font-bold text-3xl flex items-center">
+              {username} <MdVerified className="text-blue-600 ml-2" />
+            </h1>
+            <p>{bio}</p>
           </div>
+
+          <Editprofile />
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex justify-center items-center my-8 font-medium text-lg mt-42">
+      {/* TABS */}
+      <div className="flex justify-center items-center my-8 font-medium text-lg">
         <p
           onClick={() => {
-            setsellBookstatus(true),
-              setBookstaus(false),
-              setpurchaseStatus(false);
+            setsellBookstatus(true);
+            setBookstaus(false);
+            setpurchaseStatus(false);
           }}
-          className={
+          className={`p-4 cursor-pointer ${
             sellBookstatus
-              ? "text-blue-500 p-4 border-gray-400 border-t border-l border-r rounded cursor-pointer"
-              : "p-4 border-b border-gray-400 cursor-pointer"
-          }
+              ? "text-blue-500 border-t border-l border-r rounded"
+              : "border-b"
+          }`}
         >
           Sell Book
         </p>
+
         <p
           onClick={() => {
-            setsellBookstatus(false),
-              setBookstaus(true),
-              setpurchaseStatus(false);
+            setsellBookstatus(false);
+            setBookstaus(true);
+            setpurchaseStatus(false);
           }}
-          className={
+          className={`p-4 cursor-pointer ${
             Bookstatus
-              ? "text-blue-500 p-4 border-gray-400 border-t border-l border-r rounded cursor-pointer"
-              : "p-4 border-b border-gray-400 cursor-pointer"
-          }
+              ? "text-blue-500 border-t border-l border-r rounded"
+              : "border-b"
+          }`}
         >
           All Books
         </p>
+
         <p
           onClick={() => {
-            setsellBookstatus(false),
-              setBookstaus(false),
-              setpurchaseStatus(true),
-              userAddedBooks();
-
+            setsellBookstatus(false);
+            setBookstaus(false);
+            setpurchaseStatus(true);
           }}
-          className={
+          className={`p-4 cursor-pointer ${
             purchaseStatus
-              ? "text-blue-500 p-4 border-gray-400 border-t border-l border-r rounded cursor-pointer"
-              : "p-4 border-b border-gray-400 cursor-pointer"
-          }
+              ? "text-blue-500 border-t border-l border-r rounded"
+              : "border-b"
+          }`}
         >
           Purchase History
         </p>
       </div>
 
-      {/* Sell Book Section */}
+      {/* Sell Book Form */}
       {sellBookstatus && (
-        <div className="md:p-20 p-5">
-          <div className="bg-gray-200 md:p-10 p-5 rounded">
-            <h1 className="text-center text-3xl font-medium">Book Details</h1>
-            <div className="md:grid grid-cols-2">
-              <div className="md:my-10 mt-5 px-2">
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    value={bookDetails.title}
-                    onChange={(e) =>
-                      setbookDetails({ ...bookDetails, title: e.target.value })
-                    }
-                    placeholder="Titele"
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+        <div className="p-10">
+          <div className="bg-gray-200 p-10 rounded">
+            <h1 className="text-center text-3xl font-semibold">Book Details</h1>
 
-                <div className="mb-3">
-                  <input
-                    value={bookDetails.author}
-                    onChange={(e) =>
-                      setbookDetails({ ...bookDetails, author: e.target.value })
-                    }
-                    type="text"
-                    placeholder="Author"
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+            {/* Form */}
+            <div className="grid md:grid-cols-2 gap-5 mt-8">
+              {/* Left Side Inputs */}
+              <div>
+                <input
+                  type="text"
+                  value={bookDetails.title}
+                  onChange={(e) =>
+                    setbookDetails({ ...bookDetails, title: e.target.value })
+                  }
+                  placeholder="Title"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
 
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    value={bookDetails.nopages}
-                    onChange={(e) =>
-                      setbookDetails({
-                        ...bookDetails,
-                        nopages: e.target.value,
-                      })
-                    }
-                    placeholder="No of Pages"
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+                <input
+                  value={bookDetails.author}
+                  onChange={(e) =>
+                    setbookDetails({ ...bookDetails, author: e.target.value })
+                  }
+                  type="text"
+                  placeholder="Author"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
 
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    value={bookDetails.imageURL}
-                    onChange={(e) =>
-                      setbookDetails({
-                        ...bookDetails,
-                        imageURL: e.target.value,
-                      })
-                    }
-                    placeholder="Image url"
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+                <input
+                  value={bookDetails.nopages}
+                  onChange={(e) =>
+                    setbookDetails({
+                      ...bookDetails,
+                      nopages: e.target.value,
+                    })
+                  }
+                  placeholder="Number of pages"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
 
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    placeholder="Price"
-                    value={bookDetails.price}
-                    onChange={(e) =>
-                      setbookDetails({ ...bookDetails, price: e.target.value })
-                    }
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+                <input
+                  value={bookDetails.imageURL}
+                  onChange={(e) =>
+                    setbookDetails({ ...bookDetails, imageURL: e.target.value })
+                  }
+                  placeholder="Image URL"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
 
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    value={bookDetails.discountPrice}
-                    onChange={(e) =>
-                      setbookDetails({
-                        ...bookDetails,
-                        discountPrice: e.target.value,
-                      })
-                    }
-                    placeholder="Discount Price"
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+                <input
+                  value={bookDetails.price}
+                  onChange={(e) =>
+                    setbookDetails({ ...bookDetails, price: e.target.value })
+                  }
+                  placeholder="Price"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
 
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    placeholder="Abstract"
-                    value={bookDetails.abstract}
-                    onChange={(e) =>
-                      setbookDetails({
-                        ...bookDetails,
-                        abstract: e.target.value,
-                      })
-                    }
-                    rows={"8"}
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+                <input
+                  value={bookDetails.discountPrice}
+                  onChange={(e) =>
+                    setbookDetails({
+                      ...bookDetails,
+                      discountPrice: e.target.value,
+                    })
+                  }
+                  placeholder="Discount Price"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
+
+                <textarea
+                  value={bookDetails.abstract}
+                  onChange={(e) =>
+                    setbookDetails({
+                      ...bookDetails,
+                      abstract: e.target.value,
+                    })
+                  }
+                  placeholder="Abstract"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
               </div>
 
-              <div className="md:my-10 px-2">
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    value={bookDetails.publisher}
-                    onChange={(e) =>
-                      setbookDetails({
-                        ...bookDetails,
-                        publisher: e.target.value,
-                      })
-                    }
-                    placeholder="Publisher"
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+              {/* Right Side */}
+              <div>
+                <input
+                  value={bookDetails.publisher}
+                  onChange={(e) =>
+                    setbookDetails({
+                      ...bookDetails,
+                      publisher: e.target.value,
+                    })
+                  }
+                  placeholder="Publisher"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
 
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    placeholder="Language"
-                    value={bookDetails.language}
-                    onChange={(e) =>
-                      setbookDetails({
-                        ...bookDetails,
-                        language: e.target.value,
-                      })
-                    }
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+                <input
+                  value={bookDetails.language}
+                  onChange={(e) =>
+                    setbookDetails({
+                      ...bookDetails,
+                      language: e.target.value,
+                    })
+                  }
+                  placeholder="Language"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
 
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    value={bookDetails.isbn}
-                    onChange={(e) =>
-                      setbookDetails({ ...bookDetails, isbn: e.target.value })
-                    }
-                    placeholder="ISBN"
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+                <input
+                  value={bookDetails.isbn}
+                  onChange={(e) =>
+                    setbookDetails({ ...bookDetails, isbn: e.target.value })
+                  }
+                  placeholder="ISBN"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
 
-                <div className="mb-3">
-                  <input
-                    type="text"
-                    placeholder="Category"
-                    value={bookDetails.category}
-                    onChange={(e) =>
-                      setbookDetails({
-                        ...bookDetails,
-                        category: e.target.value,
-                      })
-                    }
-                    className="p-2 bg-white rounded w-full"
-                  />
-                </div>
+                <input
+                  value={bookDetails.category}
+                  onChange={(e) =>
+                    setbookDetails({
+                      ...bookDetails,
+                      category: e.target.value,
+                    })
+                  }
+                  placeholder="Category"
+                  className="p-2 bg-white rounded w-full mb-3"
+                />
 
-                {/* Preview Section FIXED */}
-                <div className="flex justify-center items-center mt-10 flex-col">
-                  {preview ? (
-                    <img
-                      src={preview}
-                      alt=""
-                      style={{ width: "200px", height: "200px" }}
-                    />
-                  ) : (
+                {/* Upload Preview */}
+                <div className="flex flex-col items-center mt-4">
+                  {!preview ? (
                     <label htmlFor="uploadBookImg">
                       <input
-                        onChange={(e) => Handlefile(e)}
+                        onChange={Handlefile}
                         id="uploadBookImg"
                         type="file"
-                        style={{ display: "none" }}
-                        alt="no-image"
+                        hidden
                       />
                       <img
                         src="https://static.vecteezy.com/system/resources/previews/024/263/832/original/upload-image-icon-vector.jpg"
+                        style={{ width: 200, height: 200 }}
                         alt=""
-                        style={{ width: "200px", height: "200px" }}
                       />
                     </label>
+                  ) : (
+                    <img
+                      src={preview}
+                      style={{ width: 200, height: 200 }}
+                      alt=""
+                    />
                   )}
-                  {preview && (
-                    <div className="mt-10 flex items-center gap-5">
-                      {allUploadImages.map((item) => (
+
+                  {/* Small thumbnails */}
+                  {allUploadImages.length > 0 && (
+                    <div className="flex gap-4 mt-4">
+                      {allUploadImages.map((img, idx) => (
                         <img
-                          src={item}
+                          key={idx}
+                          src={img}
+                          style={{ width: 60, height: 60 }}
                           alt=""
-                          style={{ width: "50px", height: "50px" }}
                         />
                       ))}
-                      {allUploadImages.length < 3 && (
-                        <label htmlFor="uploadBookImg">
-                          <input
-                            onChange={(e) => Handlefile(e)}
-                            id="uploadBookImg"
-                            type="file"
-                            style={{ display: "none" }}
-                            alt="no-image"
-                          />
-                          <img
-                            src="https://static.vecteezy.com/system/resources/previews/024/263/832/original/upload-image-icon-vector.jpg"
-                            alt=""
-                            style={{ width: "200px", height: "200px" }}
-                          />
-                        </label>
-                      )}
                     </div>
                   )}
                 </div>
 
-                <div className="flex md:justify-end justify-center mt-5  gap-2">
-                  <button onClick={Handlereset} className="bg-red-500 border text-white px-5 py-3 rounded  hover:border-red-500 hover:text-red-600 hover:bg-white">
+                <div className="flex justify-end mt-6 gap-3">
+                  <button
+                    onClick={Handlereset}
+                    className="bg-red-500 text-white px-4 py-2 rounded"
+                  >
                     Reset
                   </button>
-                  <button type="button" onClick={HandleaddBook} className="bg-green-500 border text-white px-5 py-3 rounded  hover:border-green-500 hover:text-green-600 hover:bg-white">
-                    submit
+
+                  <button
+                    onClick={HandleaddBook}
+                    className="bg-green-500 text-white px-4 py-2 rounded"
+                  >
+                    Submit
                   </button>
                 </div>
               </div>
@@ -531,116 +438,86 @@ useEffect(()=>{
         </div>
       )}
 
-      {/* All Books */}
-   {Bookstatus && (
-  <div className="p-10 my-20 shadow rounded">
-    {userBooks?.length > 0 ? (
-      userBooks.map((book) => (
-        <div className="md:grid grid-cols-[3fr_1fr]" key={book._id}>
-          <div className="px-4">
-            <h1 className="text-2xl">{book.title}</h1>
-            <h2>{book.author}</h2>
-            <h3 className="text-blue-600">${book.price}</h3>
-            <p>{book.abstract}</p>
+      {/* ALL BOOKS */}
+      {Bookstatus && (
+        <div className="p-10 my-20 shadow rounded">
+          {userBooks.length > 0 ? (
+            userBooks.map((book) => (
+              <div key={book._id} className="grid md:grid-cols-[3fr_1fr] mb-10">
+                <div className="px-4">
+                  <h1 className="text-2xl">{book.title}</h1>
+                  <p>{book.author}</p>
+                  <p className="text-blue-600">${book.price}</p>
+                  <p>{book.abstract}</p>
 
-            <div className="flex mt-5">
-          { book.status=='pending'  ? <img
-                src="https://www.psdstamps.com/wp-content/uploads/2022/04/round-pending-stamp-png.png"
-                style={{ width: "70px", height: "70px" }}
-                alt=""
-              />:book.status=="approved"?
+                  <div className="mt-4">
+                    {book.status === "pending" ? (
+                      <img
+                        src="https://www.psdstamps.com/wp-content/uploads/2022/04/round-pending-stamp-png.png"
+                        style={{ width: 70 }}
+                      />
+                    ) : book.status === "approved" ? (
+                      <img
+                        src="https://juststickers.in/wp-content/uploads/2017/08/seal-of-approval.png"
+                        style={{ width: 70 }}
+                      />
+                    ) : (
+                      <img
+                        src="https://cdn-icons-png.flaticon.com/512/6188/6188726.png"
+                        style={{ width: 70 }}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="px-4">
+                  <img
+                    src={book.uploadImages?.[0]}
+                    style={{ height: 250 }}
+                    alt=""
+                  />
+
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={() => handleDeleteBook(book._id)}
+                      className="bg-red-500 text-white px-4 py-2 rounded"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center">
               <img
-                src="https://juststickers.in/wp-content/uploads/2017/08/seal-of-approval.png"
-                style={{ width: "70px", height: "70px" }}
-                alt=""
-              />:
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/6188/6188726.png"
-                style={{ width: "70px", height: "70px" }}
-                alt=""
-              />}
-            </div>
-          </div>
-
-          <div className="px-4 mt-4 md:mt-4">
-            <img
-              src={book.uploadImages?.[0]}
-              style={{ height: "250px" }}
-              alt=""
-            />
-
-            <div className="flex justify-end mt-4">
-              <button type="button" onClick={()=>handleDeleteBook(book?._id)} className="p-2 rounded bg-red-500 text-white hover:bg-gray-200 hover:text-red-600 hover:border hover:border-red-600">
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      ))
-    ) : (
-      <div className="flex justify-center items-center flex-col">
-        <img
-          src="https://cdn-icons-png.flaticon.com/512/7486/7486754.png"
-          style={{ width: "150px", height: "150px" }}
-          alt="No books"
-        />
-        <p className="text-red-600 text-2xl mt-3">No Book Added</p>
-      </div>
-    )}
-  </div>
-)}
-
-      {/* Purchase History */}
-      {purchaseStatus && (
-  <div className="p-10 my-20 shadow rounded">
-    {purchaseHistory.length > 0 ? (
-      purchaseHistory.map((ownbook, index) => (
-        <div key={index} className="bg-gray-200 mb-6 rounded p-4">
-          <div className="md:grid grid-cols-[3fr_1fr] gap-4">
-            
-            <div className="px-4">
-              <h1 className="text-2xl font-semibold">
-                {ownbook?.title }
-              </h1>
-
-              <h2 className="text-gray-700">
-                {ownbook?.author }
-              </h2>
-
-              <h3 className="text-blue-600 font-bold">
-                ₹{ownbook?.price }
-              </h3>
-
-              <p className="text-gray-600 mt-2">
-                {ownbook?.abstract }
-              </p>
-            </div>
-
-            
-            <div className="px-4 mt-4 md:mt-0 flex justify-center">
-              <img
-                src={ownbook?.imageURL || "/no-image.png"}
-                className="rounded shadow"
-                style={{ height: "250px" }}
-                alt={ownbook?.title }
+                src="https://cdn-icons-png.flaticon.com/512/7486/7486754.png"
+                style={{ width: 150 }}
               />
+              <p className="text-red-600 text-xl mt-2">No Books Added</p>
             </div>
-          </div>
+          )}
         </div>
-      ))
-    ) : (
-      <div className="flex justify-center items-center flex-col">
-        <img
-          src="/empty.png"
-          style={{ width: "200px", height: "200px" }}
-          alt="No Books"
-        />
-        <p className="text-red-600 text-2xl mt-4">No Book Added</p>
-      </div>
-    )}
-  </div>
-)}
+      )}
 
+      {/* PURCHASE HISTORY */}
+      {purchaseStatus && (
+        <div className="p-10 my-20 shadow rounded">
+          {purchaseHistory.length > 0 ? (
+            purchaseHistory.map((item, idx) => (
+              <div key={idx} className="bg-gray-200 p-4 mb-6 rounded">
+                <h2 className="text-xl">{item.title}</h2>
+                <p>{item.author}</p>
+                <p className="text-green-600">Purchased: ${item.price}</p>
+              </div>
+            ))
+          ) : (
+            <h1 className="text-center text-xl text-red-600">
+              No Purchase History
+            </h1>
+          )}
+        </div>
+      )}
 
       <Footer />
     </>

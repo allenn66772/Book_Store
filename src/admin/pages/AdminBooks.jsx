@@ -1,10 +1,48 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import AdminHeader from '../components/AdminHeader'
 import AdminSidebar from '../components/AdminSidebar'
+import { approveBookStatusAPI, getAllBooksAdminAPI } from '../../Service/allAPI';
+import { FcApproval } from 'react-icons/fc';
 
 function AdminBooks() {
    const [bookListstatus, setbookListstatus] = useState(true);
   const [userListstatus, setuserListstatus] = useState(false);
+const [allBooks,setallBooks]=useState([])
+
+const getAllBooks=async()=>{
+
+  try {
+    const result=await getAllBooksAdminAPI()
+    console.log(result);
+    setallBooks(result.data)
+    
+     
+  } catch (error) {
+    console.log(error);
+    
+  }
+
+}
+
+const approveBooks=async(id)=>{
+  console.log(id);
+
+  try{
+    const result=await approveBookStatusAPI(id)
+    console.log(result)
+    getAllBooks();
+    
+  }catch(error){
+    console.log(error);
+    
+  }
+  
+}
+
+useEffect(()=>{
+  getAllBooks()
+},[])
+
   return (
     <>
       <AdminHeader />
@@ -42,54 +80,32 @@ function AdminBooks() {
           </div>
           {bookListstatus && (
             <div className="md:grid grid-cols-4 w-full my-5">
-              <div className="shadow rounded p-3 m-4">
+             
+              {allBooks?.length>0 ?
+              allBooks?.map((book,index)=>(
+                 <div className="shadow rounded p-3 m-4">
                 <img
                   width={"100%"}
                   height={"300px"}
-                  src="https://m.media-amazon.com/images/I/81I6ckN0mxL._UF1000,1000_QL80_.jpg"
+                  src={book?.imageURL}
                   alt=""
                 />
                 <div className="flex flex-col justify-center items-center mt-4">
-                  <p>Book Name</p>
-                  <p>Author Name</p>
-                  <p>Discount Price</p>
-                  <button className="p-3 rounded border bg-green-700 text-white hover:border-green-400 hover:bg-white hover:text-green-400">
+                  <p>{book?.title}</p>
+                  <p>{book?.author}</p>
+                  <p>{book?.discountPrice}</p>
+                 {book?.status=="pending" && <button onClick={()=>approveBooks(book?._id)} className="p-3 rounded border bg-green-700 text-white hover:border-green-400 hover:bg-white hover:text-green-400">
                     Approve
-                  </button>
+                  </button>}
+                  {book?.status=="approved"&&
+                   <div className='w-full flex justify-end'>
+                    < FcApproval style={{width:"50px", height:"50px" , borderRadius:"50%"}}/>
+                    </div>}
                 </div>
               </div>
-              <div className="shadow rounded p-3 m-4">
-                <img
-                  width={"100%"}
-                  height={"300px"}
-                  src="https://m.media-amazon.com/images/I/81I6ckN0mxL._UF1000,1000_QL80_.jpg"
-                  alt=""
-                />
-                <div className="flex flex-col justify-center items-center mt-4">
-                  <p>Book Name</p>
-                  <p>Author Name</p>
-                  <p>Discount Price</p>
-                  <button className="p-3 rounded border bg-green-700 text-white hover:border-green-400 hover:bg-white hover:text-green-400">
-                    Approve
-                  </button>
-                </div>
-              </div>
-              <div className="shadow rounded p-3 m-4">
-                <img
-                  width={"100%"}
-                  height={"300px"}
-                  src="https://m.media-amazon.com/images/I/81I6ckN0mxL._UF1000,1000_QL80_.jpg"
-                  alt=""
-                />
-                <div className="flex flex-col justify-center items-center mt-4">
-                  <p>Book Name</p>
-                  <p>Author Name</p>
-                  <p>Discount Price</p>
-                  <button className="p-3 rounded border bg-green-700 text-white hover:border-green-400 hover:bg-white hover:text-green-400">
-                    Approve
-                  </button>
-                </div>
-              </div>
+              ))
+             :
+              <p>No Books Available....</p>}
             </div>
           )}
           {userListstatus && (
