@@ -1,47 +1,65 @@
-import React, { useEffect, useState } from 'react'
-import AdminHeader from '../components/AdminHeader'
-import AdminSidebar from '../components/AdminSidebar'
-import { approveBookStatusAPI, getAllBooksAdminAPI } from '../../Service/allAPI';
-import { FcApproval } from 'react-icons/fc';
+import React, { useEffect, useState } from "react";
+import AdminHeader from "../components/AdminHeader";
+import AdminSidebar from "../components/AdminSidebar";
+import {
+  approveBookStatusAPI,
+  getAllBooksAdminAPI,
+  getUsersInAdminAPI,
+} from "../../Service/allAPI";
+import { FcApproval } from "react-icons/fc";
 
 function AdminBooks() {
-   const [bookListstatus, setbookListstatus] = useState(true);
+  const [bookListstatus, setbookListstatus] = useState(true);
   const [userListstatus, setuserListstatus] = useState(false);
-const [allBooks,setallBooks]=useState([])
+  const [allUsers, setallUsers] = useState([]);
+  const [allBooks, setallBooks] = useState([]);
+  const [token,settoken]=useState("")
 
-const getAllBooks=async()=>{
+  const getAllBooks = async () => {
+    try {
+      const result = await getAllBooksAdminAPI();
+      console.log(result);
+      setallBooks(result.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-  try {
-    const result=await getAllBooksAdminAPI()
-    console.log(result);
-    setallBooks(result.data)
-    
-     
-  } catch (error) {
-    console.log(error);
-    
-  }
+  const approveBooks = async (id) => {
+    console.log(id);
 
-}
+    try {
+      const result = await approveBookStatusAPI(id);
+      console.log(result);
+      getAllBooks();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-const approveBooks=async(id)=>{
-  console.log(id);
+  const getAllUsers = async () => {
+    try{
+      const reqHeader = { "Authorization": `Bearer ${token}` };
+      const result=await getUsersInAdminAPI(reqHeader)
+      console.log(result);
+      if(result.status==200){
+        setallUsers(result.data)
+      }
+      
 
-  try{
-    const result=await approveBookStatusAPI(id)
-    console.log(result)
+    }catch(error){
+      console.log(error);
+      
+    }
+  };
+
+  useEffect(() => {
     getAllBooks();
-    
-  }catch(error){
-    console.log(error);
-    
-  }
-  
-}
+    if(sessionStorage.getItem("token")){
+      settoken(sessionStorage.getItem("token"))
 
-useEffect(()=>{
-  getAllBooks()
-},[])
+    }
+  }, []);
 
   return (
     <>
@@ -68,6 +86,7 @@ useEffect(()=>{
             <p
               onClick={() => {
                 setbookListstatus(false), setuserListstatus(true);
+                getAllUsers()
               }}
               className={
                 userListstatus
@@ -80,55 +99,70 @@ useEffect(()=>{
           </div>
           {bookListstatus && (
             <div className="md:grid grid-cols-4 w-full my-5">
-             
-              {allBooks?.length>0 ?
-              allBooks?.map((book,index)=>(
-                 <div className="shadow rounded p-3 m-4">
-                <img
-                  width={"100%"}
-                  height={"300px"}
-                  src={book?.imageURL}
-                  alt=""
-                />
-                <div className="flex flex-col justify-center items-center mt-4">
-                  <p>{book?.title}</p>
-                  <p>{book?.author}</p>
-                  <p>{book?.discountPrice}</p>
-                 {book?.status=="pending" && <button onClick={()=>approveBooks(book?._id)} className="p-3 rounded border bg-green-700 text-white hover:border-green-400 hover:bg-white hover:text-green-400">
-                    Approve
-                  </button>}
-                  {book?.status=="approved"&&
-                   <div className='w-full flex justify-end'>
-                    < FcApproval style={{width:"50px", height:"50px" , borderRadius:"50%"}}/>
-                    </div>}
-                </div>
-              </div>
-              ))
-             :
-              <p>No Books Available....</p>}
+              {allBooks?.length > 0 ? (
+                allBooks?.map((book, index) => (
+                  <div className="shadow rounded p-3 m-4">
+                    <img
+                      width={"100%"}
+                      height={"300px"}
+                      src={book?.imageURL}
+                      alt=""
+                    />
+                    <div className="flex flex-col justify-center items-center mt-4">
+                      <p>{book?.title}</p>
+                      <p>{book?.author}</p>
+                      <p>{book?.discountPrice}</p>
+                      {book?.status == "pending" && (
+                        <button
+                          onClick={() => approveBooks(book?._id)}
+                          className="p-3 rounded border bg-green-700 text-white hover:border-green-400 hover:bg-white hover:text-green-400"
+                        >
+                          Approve
+                        </button>
+                      )}
+                      {book?.status == "approved" && (
+                        <div className="w-full flex justify-end">
+                          <FcApproval
+                            style={{
+                              width: "50px",
+                              height: "50px",
+                              borderRadius: "50%",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p>No Books Available....</p>
+              )}
             </div>
           )}
           {userListstatus && (
             <div className="md:grid grid-cols-3 w-full my-5">
-              <div className="shadow rounded p-2 m-2 bg-gray-200">
-                <p className="text-red-500 font-bold ">ID:7545545445</p>
+              {allUsers.length>0?allUsers.map((book,item)=>(
+                <div className="shadow rounded p-2 m-2 bg-gray-200">
+                <p className="text-red-500 font-bold ">{book?._id}</p>
                 <div className="flex items-center mt-3">
                   <img
                     width={"100px"}
                     height={"100px"}
                     style={{ borderRadius: "50%" }}
-                    src=""
+                    src={book?.profile}
                     alt=""
                   />
                   <div className="flex flex-col ml-3 w-full">
-                    <p className="text-blue-800 text-lg">Username</p>
-                    <p>Email</p>
+                    <p className="text-blue-800 text-lg">{book?.username}</p>
+                    <p>{book?.email}</p>
                   </div>
                 </div>
-
-
-
               </div>
+
+              )):
+              <p>no users Available</p>
+            }
+             
             </div>
           )}
         </div>
@@ -137,4 +171,4 @@ useEffect(()=>{
   );
 }
 
-export default AdminBooks
+export default AdminBooks;
