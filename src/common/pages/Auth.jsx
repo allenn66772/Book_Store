@@ -11,25 +11,26 @@ function Auth({ register }) {
     username: "",
     email: "",
     password: "",
+    confirmpassword: "",
   });
   console.log(userDetails);
   const navigate = useNavigate();
 
   const HandleRegister = async () => {
-    const { username, email, password } = userDetails;
-    if (!username || !email || !password) {
+    const { username, email, password, confirmpassword } = userDetails;
+    if (!username || !email || !password || !confirmpassword) {
       alert("Fill the form completely");
     } else {
       // alert("Ready for API Call")
       const result = await registerAPI(userDetails);
       console.log(result);
       if (result.status == 200) {
-    
         toast.success("Registered Successfully");
         setuserDetails({
           username: "",
           email: "",
           password: "",
+          confirmpassword: "",
         });
         navigate("/login");
       } else if (result.status == 404) {
@@ -38,6 +39,7 @@ function Auth({ register }) {
           username: "",
           email: "",
           password: "",
+          confirmpassword: "",
         });
       } else {
         toast.error("something went wrong");
@@ -53,15 +55,22 @@ function Auth({ register }) {
       const result = await LoginAPI(userDetails);
       console.log(result);
       if (result.status == 200) {
-            sessionStorage.setItem("existingUser",JSON.stringify(result.data.existingUser))
-        sessionStorage.setItem("token",result.data.token)
+        sessionStorage.setItem(
+          "existingUser",
+          JSON.stringify(result.data.existingUser)
+        );
+        sessionStorage.setItem("token", result.data.token);
         toast.success(`Login Sucessfull`);
+        if (result.data.existingUser.role == "admin") {
+          navigate("/admin-home");
+        } else {
+          navigate("/");
+        }
         setuserDetails({
           username: "",
           email: "",
           password: "",
         });
-        navigate("/");
       } else if (result.status == 404) {
         toast.warning(result.status.data);
         setuserDetails({
@@ -153,6 +162,30 @@ function Auth({ register }) {
                   {showPassword ? <FaEye /> : <FaEyeSlash />}
                 </span>
               </div>
+              {register && (
+                <div className="mt-5 relative">
+                  <label htmlFor=""> Confirm password</label>
+                  <input
+                    value={userDetails?.confirmpassword}
+                    onChange={(e) =>
+                      setuserDetails({
+                        ...userDetails,
+                        confirmpassword: e.target.value,
+                      })
+                    }
+                    type={showPassword ? "text" : "password"}
+                    placeholder="password"
+                    className="bg-white p-2 w-full rounded mt-2 placeholder-gray-500 text-black"
+                  />
+
+                  <span
+                    className="absolute right-3 top-11 cursor-pointer text-gray-700"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <FaEye /> : <FaEyeSlash />}
+                  </span>
+                </div>
+              )}
 
               <div className="mt-2">
                 <p className="text-xs text-orange-400">

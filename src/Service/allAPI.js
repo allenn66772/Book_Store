@@ -58,3 +58,7 @@ export const approveBookStatusAPI=async(id)=>{
 export const getUsersInAdminAPI=async(reqHeader)=>{
     return await CommonAPI("GET",`${SERVERURL}/allUsers-inAdmin`,{},reqHeader)
 }
+//update admin profile
+ export const updateAdminProfileAPI = async (reqBody, reqHeader) => {
+  return await CommonAPI("PUT",`${SERVERURL}/update-admin-profile`,reqBody,reqHeader);
+};
