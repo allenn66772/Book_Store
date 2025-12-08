@@ -15,6 +15,8 @@ import AdminSettings from "./admin/pages/AdminSettings";
 import { useEffect, useState } from "react";
 import PreLoader from "./common/pages/PreLoader";
 import { ToastContainer } from "react-toastify";
+import Paymentsuccess from "./users/pages/Paymentsuccess";
+import PaymentError from "./users/pages/PaymentError";
 function App() {
   const [loader, setLoader] = useState(true);
   useEffect(() => {
@@ -37,6 +39,8 @@ function App() {
         <Route path="/careers" element={<Careers />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/view-books/:id" element={<ViewBook />} />
+        <Route path="/payment-sucess" element={<Paymentsuccess/>}/>
+        <Route path="/payment-error" element={<PaymentError/>}/>
        
         {/* admin */}
         <Route path="/admin-home" element={<AdminHome />} />

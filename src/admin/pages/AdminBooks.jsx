@@ -13,7 +13,7 @@ function AdminBooks() {
   const [userListstatus, setuserListstatus] = useState(false);
   const [allUsers, setallUsers] = useState([]);
   const [allBooks, setallBooks] = useState([]);
-  const [token,settoken]=useState("")
+  const [token, setToken] = useState("");
 
   const getAllBooks = async () => {
     try {
@@ -38,28 +38,26 @@ function AdminBooks() {
   };
 
   const getAllUsers = async () => {
-    try{
-      const reqHeader = { "Authorization": `Bearer ${token}` };
-      const result=await getUsersInAdminAPI(reqHeader)
+    try {
+      const reqHeader = { Authorization: `Bearer ${token}` };
+      const result = await getUsersInAdminAPI(reqHeader);
       console.log(result);
-      if(result.status==200){
-        setallUsers(result.data)
+      if (result.status == 200) {
+        setallUsers(result.data);
       }
-      
-
-    }catch(error){
+    } catch (error) {
       console.log(error);
-      
     }
   };
 
   useEffect(() => {
-    getAllBooks();
-    if(sessionStorage.getItem("token")){
-      settoken(sessionStorage.getItem("token"))
-
+    if (sessionStorage.getItem("token")) {
+       sessionStorage.getItem("token")
+      setToken(token)
     }
   }, []);
+
+
 
   return (
     <>
@@ -86,7 +84,7 @@ function AdminBooks() {
             <p
               onClick={() => {
                 setbookListstatus(false), setuserListstatus(true);
-                getAllUsers()
+                getAllUsers();
               }}
               className={
                 userListstatus
@@ -141,28 +139,30 @@ function AdminBooks() {
           )}
           {userListstatus && (
             <div className="md:grid grid-cols-3 w-full my-5">
-              {allUsers.length>0?allUsers.map((book,item)=>(
-                <div className="shadow rounded p-2 m-2 bg-gray-200">
-                <p className="text-red-500 font-bold ">{book?._id}</p>
-                <div className="flex items-center mt-3">
-                  <img
-                    width={"100px"}
-                    height={"100px"}
-                    style={{ borderRadius: "50%" }}
-                    src={book?.profile}
-                    alt=""
-                  />
-                  <div className="flex flex-col ml-3 w-full">
-                    <p className="text-blue-800 text-lg">{book?.username}</p>
-                    <p>{book?.email}</p>
+              {allUsers.length > 0 ? (
+                allUsers.map((book, item) => (
+                  <div className="shadow rounded p-2 m-2 bg-gray-200">
+                    <p className="text-red-500 font-bold ">{book?._id}</p>
+                    <div className="flex items-center mt-3">
+                      <img
+                        width={"100px"}
+                        height={"100px"}
+                        style={{ borderRadius: "50%" }}
+                        src={book?.profile}
+                        alt=""
+                      />
+                      <div className="flex flex-col ml-3 w-full">
+                        <p className="text-blue-800 text-lg">
+                          {book?.username}
+                        </p>
+                        <p>{book?.email}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              )):
-              <p>no users Available</p>
-            }
-             
+                ))
+              ) : (
+                <p>no users Available</p>
+              )}
             </div>
           )}
         </div>
