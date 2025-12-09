@@ -9,6 +9,10 @@ export const registerAPI= async (reqBody)=>{
 export const LoginAPI= async (reqBody)=>{
     return await CommonAPI ("POST",`${SERVERURL}/login`,reqBody)
 }
+//google login
+export const googleLoginAPI =async (reqBody)=>{
+    return await CommonAPI("POST",`${SERVERURL}/google-login`,reqBody)
+}
 
 //get home book
 export const getHomeBookAPI =async()=>{
@@ -62,3 +66,4 @@ export const getUsersInAdminAPI=async(reqHeader)=>{
  export const updateAdminProfileAPI = async (reqBody, reqHeader) => {
   return await CommonAPI("PUT",`${SERVERURL}/update-admin-profile`,reqBody,reqHeader);
 };
+

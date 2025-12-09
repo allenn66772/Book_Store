@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FaCircleUser } from "react-icons/fa6";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { LoginAPI, registerAPI } from "../../Service/allAPI";
+import { googleLoginAPI, LoginAPI, registerAPI } from "../../Service/allAPI";
 import { toast } from "react-toastify";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 function Auth({ register }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -88,6 +90,38 @@ function Auth({ register }) {
       }
     }
   };
+
+  const handleGoogleLogin = async(credentialResponse)=>{
+    console.log(credentialResponse.credential);
+    const googleData=jwtDecode(credentialResponse.credential)
+    console.log(googleData);
+    try {
+      const result =await googleLoginAPI({username:googleData.name,email:googleData.email,password:"googlepassword",profile:googleData.picture})
+      console.log(result);
+      if(result.status==200){
+        sessionStorage.setItem("existingUser",JSON.stringify(result.data.existingUser));
+        sessionStorage.setItem("token", result.data.token);
+        toast.success("Login Sucessful")
+        if (result.data.existingUser.role == "admin") {
+          navigate("/admin-home");
+        } else {
+          navigate("/");
+        }
+
+      }else{
+        toast.error("Something went Wrong")
+      }
+      
+      
+    } catch (error) {
+      console.log(error);
+      
+      
+    }
+    
+  }
+
+
 
   return (
     <>
@@ -213,7 +247,19 @@ function Auth({ register }) {
                 )}
               </div>
 
-              <div>{/* google authentication */}</div>
+            {!register &&  <div className="mt-1">
+                {/* google authentication */}
+                <GoogleLogin
+                  onSuccess={(credentialResponse) => {
+                    console.log(credentialResponse);
+                    handleGoogleLogin(credentialResponse)
+                  }}
+                  onError={() => {
+                    console.log("Login Failed");
+                  }}
+                />
+                
+              </div>}
 
               <div className="mt-3">
                 {register ? (
