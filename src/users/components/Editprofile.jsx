@@ -90,9 +90,9 @@ function Editprofile() {
     <>
       <button
         onClick={() => setoffCanvas(true)}
-        className="flex px-4 py-3 font-bold border hover:bg-blue-600 hover:text-white border-blue-600 text-blue-800"
+        className="flex px-4 py-3 font-bold border hover:bg-blue-600 hover:text-white border-white text-white"
       >
-        <FaRegEdit className="mt-1 me-2" /> Edit
+        <FaRegEdit className="mt-1 me-2 text-white" /> Edit
       </button>
 
       {offCanvas && (

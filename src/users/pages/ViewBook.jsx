@@ -4,9 +4,10 @@ import { FaRegEye } from "react-icons/fa";
 import { FaBackward } from "react-icons/fa";
 import Footer from "../../common/components/Footer";
 import { useParams } from "react-router-dom";
-import { getABookAPI } from "../../Service/allAPI";
+import { getABookAPI, makePaymentAPI } from "../../Service/allAPI";
 import SERVERURL from "../../Service/ServerURL";
 import { Link } from "react-router-dom";
+import { loadStripe } from "@stripe/stripe-js";
 
 function ViewBook() {
   const [modalStatus, setmodalStatus] = useState(false);
@@ -26,6 +27,34 @@ function ViewBook() {
     }
   };
   console.log();
+
+ const handlePurchase = async () => {
+  const stripe = await loadStripe(
+    "pk_test_51ScgVWFYp2WPUbfVRTuRbDcByfA6YMV3q9YGf631rDeEbqMgweS5eqeKgGT97RqtS5lENQ2oa6LXOh4UiNT4OlVF001G3vSLkm"
+  );
+  console.log(stripe);
+  
+
+  const token = sessionStorage.getItem("token");
+  if (!token) return;
+
+  const reqHeader = { Authorization: `Bearer ${token}` };  // FIXED
+
+  try {
+    const result = await makePaymentAPI(bookDetails, reqHeader); // OK NOW
+
+    console.log("Payment API response:", result.data);
+
+    const checkoutSessionUrl = result.data?.checkoutSessionUrl;
+
+    if (checkoutSessionUrl) {
+      window.location.href = checkoutSessionUrl;
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 
   useEffect(() => {
     getABook();
@@ -62,11 +91,18 @@ function ViewBook() {
               </div>
               <p className="text-justify mt-10">{bookDetails?.abstract}</p>
               <div className="mt-10 flex justify-end">
-                <Link to="/all-books" className="flex px-4 py-3 bg-blue-800 rounded text-white hover:bg-white hover:text-blue-800 hover:border hover:border-blue-800">
+                <Link
+                  to="/all-books"
+                  className="flex px-4 py-3 bg-blue-800 rounded text-white hover:bg-white hover:text-blue-800 hover:border hover:border-blue-800"
+                >
                   <FaBackward className="mt-1 me-2" />
                   Back
                 </Link>
-                <button className="flex px-4 py-3 bg-green-800 rounded text-white hover:bg-white hover:text-green-800 hover:border hover:border-green-800 ms-5">
+                <button
+                  onClick={handlePurchase}
+                  type="button"
+                  className="flex px-4 py-3 bg-green-800 rounded text-white hover:bg-white hover:text-green-800 hover:border hover:border-green-800 ms-5"
+                >
                   Buy ₹
                 </button>
               </div>
@@ -92,23 +128,21 @@ function ViewBook() {
                   </p>
                 </div>
                 <div className="md:flex flex-wrap my-4 overflow-y-hidden">
-
-                { bookDetails?.uploadImages.length>0 ?
-                bookDetails?.uploadImages?.map(img=>(
-                   <img
-                    height={"250px"}
-                    width={"250px"}
-                    className="mx-2 md:mb-0 mb-2"
-                    src={`${SERVERURL}/imgUploads/${img}`}
-                    alt=""
-                  />
-                  
-                )) 
-:
-                  <p className="font-bold text-red-600 ms-5">
-                    User Uploaded book images are unavailable....
-                  </p>}
-
+                  {bookDetails?.uploadImages.length > 0 ? (
+                    bookDetails?.uploadImages?.map((img) => (
+                      <img
+                        height={"250px"}
+                        width={"250px"}
+                        className="mx-2 md:mb-0 mb-2"
+                        src={`${SERVERURL}/imgUploads/${img}`}
+                        alt=""
+                      />
+                    ))
+                  ) : (
+                    <p className="font-bold text-red-600 ms-5">
+                      User Uploaded book images are unavailable....
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,8 +1,20 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { FaRegUser } from "react-icons/fa";
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { userAuthContext } from '../../Context/Authcontext';
 
 
 function AdminHeader() {
+  const {setauthorisedUser}=useContext(userAuthContext)
+
+    const navigate=useNavigate()
+    const logout=()=>{
+        sessionStorage.clear()
+        toast.success("Logout Successfull")
+         setauthorisedUser(false)
+        navigate("/")
+    }
     return (
         <>
             <nav className='px-5 py-3 flex items-center'>
@@ -13,7 +25,7 @@ function AdminHeader() {
                 </div>
                 {/* login */}
                 <div className='ms-auto'>
-                    <button className='flex justify-between items-center border border-black rounded px-4 py-2 ms-3 
+                    <button onClick={logout} className='flex justify-between items-center border border-black rounded px-4 py-2 ms-3 
                     hover:bg-black hover:text-white'><FaRegUser />Logout</button>
                 </div>
             </nav>

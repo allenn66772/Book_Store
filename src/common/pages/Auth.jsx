@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FaCircleUser } from "react-icons/fa6";
 import { Link, Navigate, useNavigate } from "react-router-dom";
@@ -6,6 +6,7 @@ import { googleLoginAPI, LoginAPI, registerAPI } from "../../Service/allAPI";
 import { toast } from "react-toastify";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
+import { userAuthContext } from "../../Context/Authcontext";
 
 function Auth({ register }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +16,7 @@ function Auth({ register }) {
     password: "",
     confirmpassword: "",
   });
+  const {setauthorisedUser}=useContext(userAuthContext)
   console.log(userDetails);
   const navigate = useNavigate();
 
@@ -63,6 +65,7 @@ function Auth({ register }) {
         );
         sessionStorage.setItem("token", result.data.token);
         toast.success(`Login Sucessfull`);
+         setauthorisedUser(true)
         if (result.data.existingUser.role == "admin") {
           navigate("/admin-home");
         } else {
@@ -102,6 +105,7 @@ function Auth({ register }) {
         sessionStorage.setItem("existingUser",JSON.stringify(result.data.existingUser));
         sessionStorage.setItem("token", result.data.token);
         toast.success("Login Sucessful")
+         setauthorisedUser(true)
         if (result.data.existingUser.role == "admin") {
           navigate("/admin-home");
         } else {
